@@ -187,6 +187,30 @@ func TestServing(t *testing.T) {
 	}
 }
 
+func TestServeZFlagClear(t *testing.T) {
+	HandleFunc("example.com.", HelloServer)
+
+	s, addrstr, err := RunLocalUDPServer(":0")
+	if err != nil {
+		t.Fatalf("unable to run test server: %v", err)
+	}
+	defer s.Shutdown()
+
+	c := new(Client)
+	m := new(Msg)
+	
+	// Test the Z flag is not echoed
+	m.SetQuestion("example.com.", TypeTXT)
+	m.Zero = true
+	r, _, err := c.Exchange(m, addrstr)
+	if err != nil {
+		t.Fatal("failed to exchange example.com with +zflag", err)
+	}
+	if r.Zero {
+		t.Error("the response should not have Z flag set - even for a query which does")
+	}
+}
+
 func TestServingTLS(t *testing.T) {
 	HandleFunc("miek.nl.", HelloServer)
 	HandleFunc("example.com.", AnotherHelloServer)
